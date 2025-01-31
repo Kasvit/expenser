@@ -90,4 +90,3 @@ yarn-debug.log*
 .DS_Store
 
 /api-docs
-/graphiql

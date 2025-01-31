@@ -44,7 +44,6 @@ group :development, :test do
   gem "factory_bot_rails"
   gem "faker"
   gem "rspec-rails"
-  gem "rubocop-rails-omakase", require: false
   gem "shoulda-matchers"
   gem "vcr"
   gem "webmock"
@@ -81,7 +80,8 @@ end
 
 gem "graphql"
 gem "rubocop", require: false
-gem "rswag"
 gem "jwt"
 gem "dry-initializer"
 gem "activerecord-import"
+gem "devise"
+gem "devise-jwt"
