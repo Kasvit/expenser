@@ -14,13 +14,8 @@ RSpec.describe Mutations::SignIn, type: :request do
 
     json = JSON.parse(response.body)
 
-    # Log the response for debugging
-    puts json.inspect
-
-    # Check for errors in the response
     expect(json['errors']).to be_nil
 
-    # Now check for the token
     expect(json['data']['signIn']['token']).not_to be_nil
   end
 end

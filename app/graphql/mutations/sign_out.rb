@@ -5,7 +5,7 @@ module Mutations
     type Boolean
 
     def resolve(token:)
-      Devise::JWT::RevocationStrategies::Null.revoke(token, nil)
+      Devise::JWT::RevocationStrategies::Null.revoke_jwt(token, nil)
       true
     end
   end

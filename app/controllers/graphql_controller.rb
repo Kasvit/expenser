@@ -1,20 +1,18 @@
 # frozen_string_literal: true
 
 class GraphqlController < ApplicationController
-  before_action :authenticate_user!, except: [ :execute ]
-
-  # If accessing from outside this domain, nullify the session
-  # This allows for outside API access while preventing CSRF attacks,
-  # but you'll have to authenticate your user separately
-  # protect_from_forgery with: :null_session
+  before_action :authenticate_user_from_token!
+  skip_before_action :verify_authenticity_token
 
   def execute
-    variables = prepare_variables(params[:variables])
-    query = params[:query]
-    operation_name = params[:operationName]
+    puts "Request Headers: #{request.headers.to_h.inspect}" # Debugging output
     context = {
       current_user: current_user
     }
+
+    variables = prepare_variables(params[:variables])
+    query = params[:query]
+    operation_name = params[:operationName]
     result = ExpenserSchema.execute(query, variables: variables, context: context, operation_name: operation_name)
     render json: result
   rescue StandardError => e
@@ -24,7 +22,6 @@ class GraphqlController < ApplicationController
 
   private
 
-  # Handle variables in form data, JSON body, or a blank value
   def prepare_variables(variables_param)
     case variables_param
     when String
@@ -36,7 +33,7 @@ class GraphqlController < ApplicationController
     when Hash
       variables_param
     when ActionController::Parameters
-      variables_param.to_unsafe_hash # GraphQL-Ruby will validate name and type of incoming variables.
+      variables_param.to_unsafe_hash
     when nil
       {}
     else
@@ -52,11 +49,35 @@ class GraphqlController < ApplicationController
   end
 
   def current_user
-    return unless request.headers["Authorization"]
+    token = request.headers["Authorization"]&.split(" ")&.last
+    return nil if token.nil?
 
-    token = request.headers["Authorization"].split(" ").last
-    Warden::JWTAuth::UserDecoder.new.call(token, :user, nil)
-  rescue
-    nil
+    begin
+      decoded_token = JWT.decode(
+        token,
+        Rails.application.credentials.jwt_secret,
+        true,
+        algorithm: "HS256"
+      )
+      user_id = decoded_token.first["sub"]
+      User.find_by(id: user_id)
+    rescue JWT::DecodeError => e
+      Rails.logger.error "JWT Decode Error: #{e.message}"
+      nil
+    end
+  end
+
+  def authenticate_user_from_token!
+    token = request.headers["Authorization"]&.split(" ")&.last
+    if token
+      begin
+        decoded_token = JWT.decode(token, Rails.application.credentials.jwt_secret, true, { algorithm: "HS256" })
+        @current_user = User.find(decoded_token[0]["sub"])
+      rescue JWT::DecodeError => e
+        @current_user = nil
+      end
+    else
+      @current_user = nil
+    end
   end
 end
