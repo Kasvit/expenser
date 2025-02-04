@@ -1,11 +1,9 @@
 # frozen_string_literal: true
 
 class GraphqlController < ApplicationController
-  before_action :authenticate_user_from_token!
   skip_before_action :verify_authenticity_token
 
   def execute
-    puts "Request Headers: #{request.headers.to_h.inspect}" # Debugging output
     context = {
       current_user: current_user
     }
@@ -50,34 +48,10 @@ class GraphqlController < ApplicationController
 
   def current_user
     token = request.headers["Authorization"]&.split(" ")&.last
-    return nil if token.nil?
+    return nil unless token
 
-    begin
-      decoded_token = JWT.decode(
-        token,
-        Rails.application.credentials.jwt_secret,
-        true,
-        algorithm: "HS256"
-      )
-      user_id = decoded_token.first["sub"]
-      User.find_by(id: user_id)
-    rescue JWT::DecodeError => e
-      Rails.logger.error "JWT Decode Error: #{e.message}"
-      nil
-    end
-  end
-
-  def authenticate_user_from_token!
-    token = request.headers["Authorization"]&.split(" ")&.last
-    if token
-      begin
-        decoded_token = JWT.decode(token, Rails.application.credentials.jwt_secret, true, { algorithm: "HS256" })
-        @current_user = User.find(decoded_token[0]["sub"])
-      rescue JWT::DecodeError => e
-        @current_user = nil
-      end
-    else
-      @current_user = nil
-    end
+    Warden::JWTAuth::UserDecoder.new.call(token, :user, nil)
+  rescue JWT::DecodeError
+    nil
   end
 end

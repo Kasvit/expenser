@@ -30,20 +30,7 @@ RSpec.describe Mutations::CreateExpense, type: :request do
       end
 
       def generate_token_for_user(user)
-        payload = {
-          sub: user.id,
-          scp: 'user',
-          aud: nil,
-          iat: Time.current.to_i,
-          exp: 24.hours.from_now.to_i,
-          jti: SecureRandom.uuid
-        }
-
-        JWT.encode(
-          payload,
-          Rails.application.credentials.jwt_secret,
-          'HS256'
-        )
+        Warden::JWTAuth::UserEncoder.new.call(user, :user, nil).first
       end
 
       it 'creates a new expense' do

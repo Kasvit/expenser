@@ -18,5 +18,7 @@
 #  fk_rails_...  (user_id => users.id)
 #
 class JwtDenylist < ApplicationRecord
+  include Devise::JWT::RevocationStrategies::Denylist
+
   belongs_to :user
 end
