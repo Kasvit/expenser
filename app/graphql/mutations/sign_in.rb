@@ -3,8 +3,6 @@ module Mutations
     argument :email, String, required: true
     argument :password, String, required: true
 
-    type Types::AuthPayloadType
-
     def resolve(email:, password:)
       user = User.find_by(email: email)
       return GraphQL::ExecutionError.new("Invalid email or password") unless user&.valid_password?(password)

@@ -17,11 +17,13 @@ RSpec.describe Mutations::SignOut, type: :request do
   it 'signs out a user' do
     post '/graphql', params: { query: <<~GQL, headers: { 'Authorization' => "Bearer #{@token}" } }
       mutation {
-        signOut(input: { token: "#{@token}" })
+        signOut(input: { token: "#{@token}" }) {
+          success
+        }
       }
     GQL
 
     json = JSON.parse(response.body)
-    expect(json['data']['signOut']).to be true
+    expect(json['data']['signOut']['success']).to be true
   end
 end

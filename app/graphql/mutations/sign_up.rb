@@ -3,8 +3,6 @@ module Mutations
     argument :email, String, required: true
     argument :password, String, required: true
 
-    type Types::AuthPayloadType
-
     def resolve(email:, password:)
       user = User.new(email: email, password: password)
       if user.save

@@ -4,8 +4,6 @@ module Mutations
     argument :amount, Float, required: true
     argument :description, String, required: false
 
-    type Types::ExpenseType
-
     def resolve(category_id:, amount:, description: nil)
       authenticate_user!
 
